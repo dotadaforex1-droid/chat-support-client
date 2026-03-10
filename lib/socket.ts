@@ -1,6 +1,10 @@
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || '';
+
+if (!SOCKET_URL && process.env.NODE_ENV === 'production') {
+    console.error('NEXT_PUBLIC_SOCKET_URL is not defined in production!');
+}
 
 class SocketService {
     socket: Socket | null = null;
