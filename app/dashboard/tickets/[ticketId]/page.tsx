@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useChatStore } from '@/store/useChatStore';
+import { useChatStore, Message } from '@/store/useChatStore';
 import { useParams, useRouter } from 'next/navigation';
 import { socketService } from '@/lib/socket';
 import Navbar from '@/components/Navbar';
@@ -61,8 +61,9 @@ export default function ChatPage() {
                 });
 
                 socketService.onTyping((data) => {
-                    if (data.isTyping) {
-                        setTyping(data.userName);
+                    // Only show typing if it's NOT the current user (using ID for reliability)
+                    if (data.isTyping && data.userId !== user?._id) {
+                        setTyping(data.senderRole === 'agent' ? 'Agent' : data.userName);
                     } else {
                         setTyping(null);
                     }
@@ -90,23 +91,48 @@ export default function ChatPage() {
         e.preventDefault();
         if (!input.trim()) return;
 
+        const tempMessage: Message = {
+            _id: `temp-${Date.now()}`,
+            ticketId,
+            senderId: user?._id as string,
+            senderRole: user?.role as 'customer' | 'agent',
+            message: input,
+            createdAt: new Date().toISOString(),
+            status: 'sending'
+        };
+
+        // Add to UI immediately
+        addMessage(tempMessage);
+        const currentInput = input;
+        setInput('');
+
         const msgData = {
             ticketId,
             senderId: user?._id,
             senderRole: user?.role,
-            message: input,
+            message: currentInput,
+            tempId: tempMessage._id // Essential for deduplication
         };
 
         socketService.sendMessage(msgData);
-        socketService.emitTyping({ ticketId, userName: user?.name, isTyping: false });
+        socketService.emitTyping({
+            ticketId,
+            userId: user?._id,
+            userName: user?.name,
+            senderRole: user?.role,
+            isTyping: false
+        });
         setInput('');
     };
+
 
     const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
         setInput(e.target.value);
         socketService.emitTyping({
             ticketId,
+            userId: user?._id,
             userName: user?.name,
+            senderRole: user?.role,
             isTyping: e.target.value.length > 0
         });
     };
@@ -121,37 +147,37 @@ export default function ChatPage() {
         <div className="min-h-screen bg-transparent flex flex-col h-screen overflow-hidden">
             <Navbar />
 
-            <div className="flex-1 flex overflow-hidden max-w-6xl mx-auto w-full px-6 pt-6 pb-8 md:pb-12">
+            <div className="flex-1 flex overflow-hidden max-w-6xl mx-auto w-full px-4 md:px-6 md:pt-6 md:pb-12 box-border">
                 {/* Main Chat Area */}
-                <div className="flex-1 flex flex-col crypto-glass rounded-[2.5rem] border-white/[0.04] overflow-hidden relative shadow-2xl">
+                <div className="flex-1 flex flex-col crypto-glass md:rounded-[2.5rem] border-white/[0.04] overflow-hidden relative shadow-2xl">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
                     {/* Header */}
-                    <div className="px-8 py-6 border-b border-white/[0.05] flex items-center justify-between bg-white/[0.02]">
-                        <div className="flex items-center gap-5">
-                            <Link href="/dashboard" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:text-primary transition-all group lg:hidden">
+                    <div className="px-5 md:px-8 py-4 md:py-6 border-b border-white/[0.05] flex items-center justify-between bg-white/[0.02]">
+                        <div className="flex items-center gap-3 md:gap-5">
+                            <Link href="/dashboard" className="p-2 md:p-3 bg-white/5 border border-white/10 rounded-xl hover:text-primary transition-all group lg:hidden">
                                 <ChevronLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
                             </Link>
                             <div>
-                                <h2 className="font-black text-xl tracking-tight leading-tight text-white mb-2">
+                                <h2 className="font-black text-base md:text-xl tracking-tight leading-tight text-white mb-1 md:mb-2 line-clamp-1">
                                     {activeTicket?.subject}
                                 </h2>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2 md:gap-3">
                                     <StatusBadge status={activeTicket?.status as any} />
                                     <div className="h-3 w-[1px] bg-white/10" />
-                                    <span className="text-[10px] text-muted font-black tracking-[0.1em] opacity-60">
+                                    <span className="text-[9px] md:text-[10px] text-muted font-black tracking-[0.1em] opacity-60">
                                         ID: {ticketId?.slice(-12).toUpperCase()}
                                     </span>
                                 </div>
                             </div>
                         </div>
-                        <button className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 text-muted hover:text-primary transition-all group">
+                        <button className="p-2 md:p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 text-muted hover:text-primary transition-all group">
                             <Info className="w-5 h-5 group-hover:rotate-6 transition-transform" />
                         </button>
                     </div>
 
                     {/* Messages Container */}
-                    <div className="flex-1 overflow-y-auto px-8 py-8 space-y-2 scrollbar-hide scroll-smooth">
+                    <div className="flex-1 overflow-y-auto px-4 md:px-8 py-4 md:py-8 space-y-1 md:space-y-2 scrollbar-hide scroll-smooth">
                         <div className="flex justify-center mb-8">
                             <div className="px-4 py-1.5 rounded-full bg-white/[0.03] border border-white/[0.05] text-[10px] font-black tracking-widest text-muted uppercase">
                                 Beginning of support session
@@ -182,9 +208,9 @@ export default function ChatPage() {
                     </div>
 
                     {/* Input Area */}
-                    <div className="p-8 border-t border-white/[0.05] bg-white/[0.01]">
+                    <div className="p-4 md:p-8 border-t border-white/[0.05] bg-white/[0.01]">
                         <form onSubmit={handleSend} className="relative group/form">
-                            <div className="absolute inset-0 bg-primary/5 rounded-[2rem] blur-[2rem] opacity-0 group-focus-within/form:opacity-100 transition-opacity duration-700 -z-10" />
+                            <div className="absolute inset-0 bg-primary/5 rounded-[1.5rem] md:rounded-[2rem] blur-[2rem] opacity-0 group-focus-within/form:opacity-100 transition-opacity duration-700 -z-10" />
 
                             <input
                                 type="text"
@@ -192,15 +218,15 @@ export default function ChatPage() {
                                 onChange={handleTyping}
                                 placeholder={activeTicket?.status === 'Closed' ? "This ticket is closed" : "Type your message..."}
                                 disabled={activeTicket?.status === 'Closed' || activeTicket?.status === 'Resolved'}
-                                className="crypto-input pl-8 pr-20 py-6 text-base rounded-[2rem]"
+                                className="crypto-input pl-5 md:pl-8 pr-16 md:pr-20 py-4 md:py-6 text-sm md:text-base rounded-[1.5rem] md:rounded-[2rem]"
                             />
 
                             <button
                                 type="submit"
                                 disabled={!input.trim() || activeTicket?.status === 'Closed' || activeTicket?.status === 'Resolved'}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 w-14 h-14 bg-primary text-white rounded-[1.5rem] flex items-center justify-center hover:bg-primary-hover transition-all disabled:opacity-30 disabled:hover:bg-primary shadow-blue-glow group"
+                                className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 w-11 h-11 md:w-14 md:h-14 bg-primary text-white rounded-xl md:rounded-[1.5rem] flex items-center justify-center hover:bg-primary-hover transition-all disabled:opacity-30 disabled:hover:bg-primary shadow-blue-glow group"
                             >
-                                <Send className="w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                <Send className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                             </button>
                         </form>
 

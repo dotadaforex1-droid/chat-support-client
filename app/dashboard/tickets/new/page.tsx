@@ -53,24 +53,24 @@ export default function NewTicketPage() {
         <div className="min-h-screen bg-transparent pb-12">
             <Navbar />
 
-            <main className="max-w-3xl mx-auto px-8 pt-12">
-                <Link href="/dashboard" className="inline-flex items-center gap-2 text-muted font-bold hover:text-primary transition-all mb-10 group">
-                    <div className="p-2 rounded-xl bg-white/5 border border-white/10 group-hover:border-primary/20 transition-all">
-                        <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            <main className="max-w-3xl mx-auto px-4 md:px-8 pt-6 md:pt-12">
+                <Link href="/dashboard" className="inline-flex items-center gap-2 text-muted font-bold hover:text-primary transition-all mb-8 md:mb-10 group">
+                    <div className="p-1.5 md:p-2 rounded-lg md:rounded-xl bg-white/5 border border-white/10 group-hover:border-primary/20 transition-all">
+                        <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 group-hover:-translate-x-1 transition-transform" />
                     </div>
-                    <span>Back to Dashboard</span>
+                    <span className="text-sm md:text-base">Back to Dashboard</span>
                 </Link>
 
-                <div className="mb-12 space-y-2">
-                    <h1 className="text-4xl font-black tracking-tight bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
+                <div className="mb-8 md:mb-12 space-y-1 md:space-y-2">
+                    <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
                         Create New Ticket
                     </h1>
-                    <p className="text-muted font-medium opacity-80 max-w-lg">
+                    <p className="text-sm md:text-base text-muted font-medium opacity-80 max-w-lg">
                         Tell us about your issue and our elite support team will get back to you as soon as possible.
                     </p>
                 </div>
 
-                <div className="crypto-glass p-10 rounded-[2.5rem] border-white/[0.04] relative overflow-hidden group">
+                <div className="crypto-glass p-6 md:p-10 rounded-2xl md:rounded-[2.5rem] border-white/[0.04] relative overflow-hidden group">
                     <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all duration-700" />
 
                     <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
@@ -124,16 +124,16 @@ export default function NewTicketPage() {
                             />
                         </div>
 
-                        <div className="pt-4">
+                        <div className="pt-2 md:pt-4">
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="crypto-button-primary w-full text-lg py-5 group"
+                                className="crypto-button-primary w-full text-base md:text-lg py-4 md:py-5 group"
                             >
-                                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
+                                {loading ? <Loader2 className="w-5 h-5 md:w-6 md:h-6 animate-spin" /> : (
                                     <>
                                         <span>Submit Ticket</span>
-                                        <Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                        <Send className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                                     </>
                                 )}
                             </button>

@@ -63,8 +63,9 @@ export default function AgentChatPage() {
                 });
 
                 socketService.onTyping((data) => {
-                    if (data.isTyping) {
-                        setTyping(data.userName);
+                    // Only show typing if it's NOT the current agent (using ID)
+                    if (data.isTyping && data.userId !== user?._id) {
+                        setTyping(data.senderRole === 'customer' ? 'Customer' : data.userName);
                     } else {
                         setTyping(null);
                     }
@@ -97,12 +98,20 @@ export default function AgentChatPage() {
             senderId: user?._id,
             senderRole: user?.role,
             message: input,
+            tempId: `agent-${Date.now()}` // Allow agent to also have tempId handshake
         };
 
         socketService.sendMessage(msgData);
-        socketService.emitTyping({ ticketId, userName: user?.name, isTyping: false });
+        socketService.emitTyping({
+            ticketId,
+            userId: user?._id,
+            userName: user?.name,
+            senderRole: user?.role,
+            isTyping: false
+        });
         setInput('');
     };
+
 
     const updateStatus = async (status: string) => {
         setUpdating(true);
@@ -134,7 +143,7 @@ export default function AgentChatPage() {
         <div className="min-h-screen bg-transparent flex flex-col h-screen overflow-hidden">
             <Navbar />
 
-            <div className="flex-1 flex overflow-hidden w-full max-w-[1600px] mx-auto px-6 py-6 md:pb-12">
+            <div className="flex-1 flex overflow-hidden w-full max-w-[1600px] mx-auto px-4 md:px-6 md:py-6 md:pb-12 h-[calc(100vh-5rem)] box-border">
 
                 {/* Left Sidebar - Ticket Details */}
                 <aside className="w-80 crypto-glass border-y-0 border-l-0 rounded-l-[2.5rem] hidden lg:flex flex-col p-8 overflow-y-auto">
@@ -219,31 +228,31 @@ export default function AgentChatPage() {
                 </aside>
 
                 {/* Main Chat Area */}
-                <div className="flex-1 flex flex-col relative overflow-hidden crypto-glass border-white/[0.04] rounded-r-[2.5rem] md:rounded-l-none lg:border-l-0">
+                <div className="flex-1 flex flex-col relative overflow-hidden crypto-glass border-white/[0.04] md:rounded-[2.5rem] lg:border-l-0 shadow-2xl">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
                     {/* Header */}
-                    <div className="px-8 py-6 border-b border-white/[0.05] flex items-center justify-between bg-white/[0.02]">
-                        <div className="flex items-center gap-5">
-                            <Link href="/agent" className="p-3 bg-white/5 border border-white/10 rounded-xl hover:text-primary transition-all group lg:hidden">
-                                <ChevronLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
+                    <div className="px-5 md:px-8 py-4 md:py-6 border-b border-white/[0.05] flex items-center justify-between bg-white/[0.02]">
+                        <div className="flex items-center gap-3 md:gap-5">
+                            <Link href="/agent" className="p-2 md:p-3 bg-white/5 border border-white/10 rounded-xl hover:text-primary transition-all group lg:hidden">
+                                <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 group-hover:-translate-x-0.5 transition-transform" />
                             </Link>
                             <div>
-                                <div className="flex items-center gap-4 mb-2">
-                                    <h2 className="font-black text-xl tracking-tight leading-tight text-white">{activeTicket?.subject}</h2>
+                                <div className="flex items-center gap-3 md:gap-4 mb-1 md:mb-2">
+                                    <h2 className="font-black text-base md:text-xl tracking-tight leading-tight text-white line-clamp-1">{activeTicket?.subject}</h2>
                                     <StatusBadge status={activeTicket?.status as any} />
                                 </div>
-                                <div className="flex items-center gap-3 text-[10px] font-black tracking-[0.2em] text-muted opacity-60 uppercase">
+                                <div className="flex items-center gap-2 md:gap-3 text-[9px] md:text-[10px] font-black tracking-[0.2em] text-muted opacity-60 uppercase">
                                     <span className="text-primary/80">{activeTicket?.category}</span>
                                     <span>•</span>
-                                    <span>Ticket ID: {ticketId.toUpperCase()}</span>
+                                    <span className="line-clamp-1">Ticket ID: {ticketId.toUpperCase()}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Messages */}
-                    <div className="flex-1 overflow-y-auto px-8 py-8 space-y-2 scrollbar-hide scroll-smooth">
+                    {/* Messages Container */}
+                    <div className="flex-1 overflow-y-auto px-4 md:px-8 py-4 md:py-8 space-y-1 md:space-y-2 scrollbar-hide scroll-smooth">
                         <div className="flex justify-center mb-8">
                             <div className="px-5 py-2 rounded-full bg-white/[0.03] border border-white/[0.05] text-[10px] font-black tracking-[0.25em] text-muted uppercase">
                                 System: Ticket established
@@ -266,7 +275,7 @@ export default function AgentChatPage() {
                                         <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce [animation-delay:0.2s]"></span>
                                         <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce [animation-delay:0.4s]"></span>
                                     </div>
-                                    <span className="opacity-80 tracking-wide">Customer is typing...</span>
+                                    <span className="opacity-80 tracking-wide">{typing} is typing...</span>
                                 </div>
                             </div>
                         )}
@@ -274,28 +283,35 @@ export default function AgentChatPage() {
                     </div>
 
                     {/* Input Area */}
-                    <div className="p-8 border-t border-white/[0.05] bg-white/[0.01]">
+                    <div className="p-4 md:p-8 border-t border-white/[0.05] bg-white/[0.01]">
                         <form onSubmit={handleSend} className="relative group/form">
-                            <div className="absolute inset-0 bg-primary/5 rounded-[2rem] blur-[2rem] opacity-0 group-focus-within/form:opacity-100 transition-opacity duration-700 -z-10" />
+                            <div className="absolute inset-0 bg-primary/5 rounded-[1.5rem] md:rounded-[2rem] blur-[2rem] opacity-0 group-focus-within/form:opacity-100 transition-opacity duration-700 -z-10" />
 
                             <input
                                 type="text"
                                 value={input}
                                 onChange={(e) => {
                                     setInput(e.target.value);
-                                    socketService.emitTyping({ ticketId, userName: user?.name, isTyping: e.target.value.length > 0 });
+                                    socketService.emitTyping({
+                                        ticketId,
+                                        userId: user?._id,
+                                        userName: user?.name,
+                                        senderRole: user?.role,
+                                        isTyping: e.target.value.length > 0
+                                    });
+
                                 }}
-                                placeholder={activeTicket?.status === 'Closed' ? "Session is closed" : "Type your reply as an elite agent..."}
+                                placeholder={activeTicket?.status === 'Closed' ? "Session is closed" : "Type your reply..."}
                                 disabled={activeTicket?.status === 'Closed'}
-                                className="crypto-input pl-8 pr-20 py-6 text-base rounded-[2rem]"
+                                className="crypto-input pl-5 md:pl-8 pr-16 md:pr-20 py-4 md:py-6 text-sm md:text-base rounded-[1.5rem] md:rounded-[2rem]"
                             />
 
                             <button
                                 type="submit"
                                 disabled={!input.trim() || activeTicket?.status === 'Closed'}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 w-14 h-14 bg-primary text-white rounded-[1.5rem] flex items-center justify-center hover:bg-primary-hover transition-all disabled:opacity-30 disabled:hover:bg-primary shadow-blue-glow group"
+                                className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 w-11 h-11 md:w-14 md:h-14 bg-primary text-white rounded-xl md:rounded-[1.5rem] flex items-center justify-center hover:bg-primary-hover transition-all disabled:opacity-30 disabled:hover:bg-primary shadow-blue-glow group"
                             >
-                                <Send className="w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                                <Send className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                             </button>
                         </form>
                     </div>

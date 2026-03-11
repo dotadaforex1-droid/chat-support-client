@@ -14,27 +14,27 @@ export default function Navbar() {
     if (!user) return null;
 
     return (
-        <nav className="h-20 crypto-glass border-x-0 border-t-0 flex items-center justify-between px-8 sticky top-0 z-50">
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 flex items-center justify-center">
-                    <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
+        <nav className="h-16 md:h-20 crypto-glass border-x-0 border-t-0 flex items-center justify-between px-4 md:px-8 sticky top-0 z-50">
+            <div className="flex items-center gap-2 md:gap-3">
+                <div className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center">
+                    <img src="/logo.png" alt="Logo" className="w-8 h-8 md:w-10 md:h-10 object-contain" />
                 </div>
                 <div className="flex flex-col">
-                    <span className="font-black text-xl tracking-tight leading-tight">
+                    <span className="font-black text-lg md:text-xl tracking-tight leading-tight">
                         Crypto<span className="text-primary">.com</span>
                     </span>
-                    <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted opacity-80 leading-tight">
+                    <span className="text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-bold text-muted opacity-80 leading-tight">
                         Support Center
                     </span>
                 </div>
             </div>
 
-            <div className="flex items-center gap-6">
-                <div className="flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/[0.03] border border-white/[0.05] group hover:bg-white/[0.05] transition-all">
-                    <div className="w-8 h-8 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl flex items-center justify-center border border-primary/20">
-                        <User className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-3 md:gap-6">
+                <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-1.5 md:py-2 rounded-xl md:rounded-2xl bg-white/[0.03] border border-white/[0.05] group hover:bg-white/[0.05] transition-all">
+                    <div className="w-7 h-7 md:w-8 md:h-8 bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg md:rounded-xl flex items-center justify-center border border-primary/20">
+                        <User className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" />
                     </div>
-                    <div className="flex flex-col">
+                    <div className="hidden sm:flex flex-col">
                         <span className="text-sm font-bold text-white/90">{user.name}</span>
                         <span className="text-[10px] uppercase font-black text-primary/80 tracking-widest leading-none">
                             {user.role}
@@ -42,14 +42,14 @@ export default function Navbar() {
                     </div>
                 </div>
 
-                <div className="w-[1px] h-8 bg-white/[0.08]" />
+                <div className="w-[1px] h-6 md:h-8 bg-white/[0.08]" />
 
                 <button
                     onClick={handleLogout}
-                    className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all group"
+                    className="p-2 md:p-3 rounded-lg md:rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all group"
                     title="Logout"
                 >
-                    <LogOut className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                    <LogOut className="w-4 h-4 md:w-5 md:h-5 group-hover:rotate-12 transition-transform" />
                 </button>
             </div>
         </nav>
