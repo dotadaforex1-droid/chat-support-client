@@ -36,6 +36,18 @@ export default function ChatPage() {
             return;
         }
 
+        const fetchMessages = async () => {
+            try {
+                const msgRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages/${ticketId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const msgData = await msgRes.json();
+                setMessages(msgData);
+            } catch (err) {
+                console.error('Failed to load messages:', err);
+            }
+        };
+
         const fetchData = async () => {
             try {
                 // Fetch Ticket
@@ -45,12 +57,7 @@ export default function ChatPage() {
                 const ticketData = await ticketRes.json();
                 setActiveTicket(ticketData);
 
-                // Fetch Messages
-                const msgRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages/${ticketId}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const msgData = await msgRes.json();
-                setMessages(msgData);
+                await fetchMessages();
 
                 // Connect Socket
                 socketService.connect(token as string);
@@ -78,7 +85,25 @@ export default function ChatPage() {
 
         fetchData();
 
+        // Refetch messages when the socket reconnects (e.g. waking phone from sleep)
+        const handleReconnect = () => {
+            console.log("Socket reconnected, fetching missed messages...");
+            fetchMessages();
+        };
+        socketService.onReconnect(handleReconnect);
+
+        // Refetch if the browser tab becomes visible again
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                console.log("Tab became visible, fetching missed messages...");
+                fetchMessages();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
         return () => {
+            socketService.removeReconnect(handleReconnect);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
             socketService.disconnect();
         };
     }, [ticketId, token, user, setActiveTicket, setMessages, addMessage, router]);
